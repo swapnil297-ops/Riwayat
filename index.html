@@ -497,10 +497,27 @@ body{font-family:'Inter',sans-serif;background:var(--b1);color:var(--tx);font-si
   <div id="exBody"></div>
 </div></div>
 
-<!-- Entry detail modal -->
-<div class="ov" id="mEntDet"><div class="modal">
-  <div class="mhdr"><div class="mtit" id="edTit">Entry detail</div><button class="xbtn" onclick="closeM('mEntDet')">×</button></div>
-  <div id="edCon"></div>
+<!-- Edit entry modal -->
+<div class="ov" id="mEditEntry"><div class="modal">
+  <div class="mhdr"><div class="mtit" style="color:var(--gd)">Edit entry</div><button class="xbtn" onclick="closeM('mEditEntry')">×</button></div>
+  <div style="font-size:11px;color:var(--tx3);margin-bottom:12px;padding:7px 10px;background:var(--b3);border-radius:var(--rs)">Only fields you change will be updated. Audit trail is preserved.</div>
+  <input type="hidden" id="editId"/>
+  <div class="r2"><div class="fld"><label>Entry date</label><input type="date" id="eED"/></div><div class="fld"><label>Event date</label><input type="date" id="eEvD"/></div></div>
+  <div class="fld"><label>Event name</label><input type="text" id="eEN" placeholder="e.g. Kapoor_RK Lawn"/></div>
+  <div class="r2">
+    <div class="fld"><label>Category</label><select id="eCat"><option value="">Select...</option><option>Raw Materials</option><option>Disposable/Crockery/Claypot</option><option>Staff Wage/Salary</option><option>Equipment Rental</option><option>Transport & Logistics</option><option>Fuel/Gas</option><option>Overheads</option><option>Decoration</option><option>Drawings</option><option>Outsourced Services</option></select></div>
+    <div class="fld"><label>Transaction type</label><select id="eTT"><option value="">Select...</option><option>Invoice Booked</option><option>Advance Paid</option><option>Partial Payment</option><option>Full Payment</option><option>Direct Expense / No Invoice</option><option>Adjustment / Refund</option></select></div>
+  </div>
+  <div class="fld"><label>Supplier / vendor</label><input type="text" id="eSup" placeholder="Who was paid"/></div>
+  <div class="fld"><label>Item / description</label><input type="text" id="eItm" placeholder="What was bought or paid for"/></div>
+  <div class="r2"><div class="fld"><label>Invoice amount (₹)</label><input type="number" id="eIA" placeholder="0" inputmode="decimal"/></div><div class="fld"><label>Paid amount (₹)</label><input type="number" id="ePA" placeholder="0" inputmode="decimal"/></div></div>
+  <div class="r2"><div class="fld"><label>Payment mode</label><select id="ePM"><option value="">Select...</option><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select></div><div class="fld"><label>Invoice no.</label><input type="text" id="eIN" placeholder="Optional"/></div></div>
+  <div class="fld"><label>Remark</label><input type="text" id="eRem" placeholder="Notes..."/></div>
+  <button class="btn bp" onclick="saveEdit()" style="margin-top:4px">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    Save changes
+  </button>
+  <button class="btn bs" style="margin-top:8px" onclick="closeM('mEditEntry')">Cancel</button>
 </div></div>
 
 <div class="ov" id="mCfm"><div class="modal">
@@ -802,6 +819,7 @@ function renderRecent(data){
         ${mine?`<span class="badge bpu" style="font-size:10px">You</span>`:''}
       </div>
       ${cd?`<div style="margin-top:8px;display:flex;gap:7px">
+        <button class="btn bp bsm" style="padding:4px 10px;font-size:11px;width:auto" onclick="openEditM('${r.id}')">✏ Edit</button>
         <button class="btn bda bsm" style="padding:4px 10px;font-size:11px;width:auto" onclick="cfmDel('expense','${r.id}')">Delete</button>
       </div>`:''}
     </div>`;
@@ -922,6 +940,58 @@ function load(msg){document.getElementById('lmsg').textContent=msg||'Loading...'
 function hideLoad(){document.getElementById('loader').classList.remove('show');}
 let tt;function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='show'+(type?' '+type:'');clearTimeout(tt);tt=setTimeout(()=>{t.className='';},3500);}
 
+// ── EDIT ENTRY ──
+function openEditM(id){
+  const r=allRecent.find(x=>x.id===id);
+  if(!r)return;
+  document.getElementById('editId').value=id;
+  document.getElementById('eED').value=r.entry_date||'';
+  document.getElementById('eEvD').value=r.event_date||'';
+  document.getElementById('eEN').value=r.event_name||'';
+  document.getElementById('eSup').value=r.supplier_name||'';
+  document.getElementById('eItm').value=r.item_desc||'';
+  document.getElementById('eIN').value=r.invoice_ref||'';
+  document.getElementById('eIA').value=r.invoice_amt||'';
+  document.getElementById('ePA').value=r.paid_amt||'';
+  document.getElementById('eRem').value=r.remark||'';
+  // set selects
+  const setS=(id,val)=>{if(!val)return;const e=document.getElementById(id);for(let o of e.options){if(o.value===val){e.value=val;return;}}};
+  setS('eCat',r.category_l1);setS('eTT',r.txn_type);setS('ePM',r.pay_mode);
+  openM('mEditEntry');
+}
+
+async function saveEdit(){
+  const id=document.getElementById('editId').value;
+  if(!id){toast('No entry selected','e');return;}
+  const pa=parseFloat(document.getElementById('ePA').value);
+  if(!pa||pa<=0){toast('Paid amount is required','e');return;}
+  const updates={
+    entry_date:document.getElementById('eED').value||null,
+    event_date:document.getElementById('eEvD').value||null,
+    event_name:document.getElementById('eEN').value||null,
+    category_l1:document.getElementById('eCat').value||null,
+    supplier_name:document.getElementById('eSup').value||null,
+    item_desc:document.getElementById('eItm').value||null,
+    txn_type:document.getElementById('eTT').value||null,
+    invoice_ref:document.getElementById('eIN').value||null,
+    invoice_amt:parseFloat(document.getElementById('eIA').value)||null,
+    paid_amt:pa,
+    pay_mode:document.getElementById('ePM').value||null,
+    remark:document.getElementById('eRem').value||null
+  };
+  load('Saving changes...');
+  try{
+    await sbU(`expenses?id=eq.${id}`,updates);
+    toast('Entry updated ✓','s');
+    closeM('mEditEntry');
+    // refresh
+    allRecent=[];loadRecent();
+    loadKnownSuppliers();
+    loadMiniRecent();
+  }catch(e){toast('Error: '+e.message,'e');}
+  finally{hideLoad();}
+}
+
 // ── GOOGLE SHEETS SYNC ──
 const GS_KEY='riwayat_gs_url';
 function saveGsUrl(){const url=document.getElementById('gsUrl').value.trim();if(!url||!url.includes('script.google.com')){toast('Paste a valid Apps Script URL','e');return;}localStorage.setItem(GS_KEY,url);document.getElementById('gsSyncStatus').innerHTML='<span style="color:var(--gn)">✓ Sync enabled — every new entry will be pushed to your Sheet</span>';toast('Google Sheets sync enabled ✓','s');}
@@ -946,18 +1016,30 @@ async function testGsSync(){
 async function pushAllToSheets(){
   const url=localStorage.getItem(GS_KEY);
   if(!url){toast('Set up Google Sheets URL first','e');goto('Export',document.getElementById('nEx'));return;}
-  if(!confirm('This will push ALL existing entries to Google Sheets. Rows will be added — make sure your sheet is empty first to avoid duplicates. Continue?'))return;
+
+  // Get already-pushed IDs from localStorage to prevent duplicates
+  const pushedKey='riwayat_gs_pushed';
+  let pushedIds;
+  try{pushedIds=new Set(JSON.parse(localStorage.getItem(pushedKey)||'[]'));}catch(e){pushedIds=new Set();}
+
   load('Pushing to Google Sheets...');
   try{
     const rows=await sbG('expenses?is_deleted=eq.false&select=*&order=created_at.asc');
+    const unpushed=rows.filter(r=>!pushedIds.has(r.id));
+    if(!unpushed.length){toast('All entries already pushed — no duplicates added ✓','s');hideLoad();return;}
+    if(!confirm(`${unpushed.length} new entries will be pushed to Google Sheets (${pushedIds.size} already done, skipped). Continue?`)){hideLoad();return;}
     let done=0;
-    for(const r of rows){
+    const newlyPushed=[];
+    for(const r of unpushed){
       await pushToSheets({entry_date:r.entry_date||'',event_date:r.event_date||'',event_name:r.event_name||'',category_l1:r.category_l1||'',supplier_name:r.supplier_name||'',item_desc:r.item_desc||'',txn_type:r.txn_type||'',invoice_ref:r.invoice_ref||'',invoice_amt:r.invoice_amt||'',paid_amt:r.paid_amt||0,pay_mode:r.pay_mode||'',paid_by:r.paid_by||'',remark:r.remark||'',entered_by:r.entered_by||''});
+      newlyPushed.push(r.id);
       done++;
-      // small delay to avoid rate limiting
       if(done%10===0)await new Promise(r=>setTimeout(r,500));
     }
-    toast(`${done} entries pushed to Google Sheets ✓`,'s');
+    // Save pushed IDs so we never re-push them
+    const allPushed=[...pushedIds,...newlyPushed];
+    localStorage.setItem(pushedKey,JSON.stringify(allPushed));
+    toast(`${done} entries pushed ✓ — will not duplicate on next push`,'s');
   }catch(e){toast('Error: '+e.message,'e');}finally{hideLoad();}
 }
 
