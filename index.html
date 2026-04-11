@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="pragma" content="no-cache"/>
+<meta http-equiv="expires" content="0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Riwayat — Khushboo Caterers</title>
+<title>Riwayat — Khushboo Caterers v5</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{--bg:#829579;--bgd:#697C60;--gd:#ffe2a1;--gd2:#e8c878;--b1:#1e2318;--b2:#252c1e;--b3:#2e3626;--b4:#374030;--br:#3a4432;--br2:#4a5640;--tx:#f5f0e8;--tx2:#b8b09a;--tx3:#8a8470;--gn:#7ab87a;--rd:#d97070;--am:#d4a843;--bl:#7aa8c8;--pu:#a889d4;--r:14px;--rs:9px}
@@ -367,28 +370,72 @@ body{font-family:'Inter',sans-serif;background:var(--b1);color:var(--tx);font-si
       <div class="excard" onclick="openExport('year')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><div class="et">By year</div><div class="es">Annual report</div></div>
     </div>
   </div>
-  <!-- OneDrive Sync Section -->
+  <!-- Google Sheets Live Sync -->
   <div class="od-card">
-    <div class="od-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 14.9A5 5 0 0 0 16 8a6 6 0 0 0-11.9 1.5A4.5 4.5 0 0 0 4 18h16a4.5 4.5 0 0 0 .5-3.1z"/></svg> OneDrive Sync</div>
-    <div class="ct">Sync with your OneDrive Excel</div>
+    <div class="od-badge" style="background:#0a2010;border-color:#1a5530;color:#5dba7d">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      Google Sheets — Live Sync
+    </div>
+    <div class="ct" style="margin-top:6px">Auto-push every entry to Google Sheets</div>
     <div style="font-size:12px;color:var(--tx3);line-height:1.8;margin-bottom:12px">
-      Export the latest data as an Excel file, then save it directly to your OneDrive folder — keeping your Excel always up to date.
+      Connect a Google Sheet once — every new expense entry will be appended automatically. Works with your personal Gmail, no OAuth required.
     </div>
-    <div style="background:var(--b3);border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--tx2);line-height:1.9">
-      <div style="color:var(--gd2);font-weight:600;margin-bottom:5px">How to keep OneDrive in sync:</div>
-      <div>① Tap <strong style="color:var(--gd)">Export → All data</strong> below to download the latest Excel file</div>
-      <div>② Open your <strong style="color:var(--bl)">OneDrive app</strong> on your phone</div>
-      <div>③ Upload / replace the file in your Riwayat folder on OneDrive</div>
-      <div>④ Your PC Excel auto-syncs via OneDrive</div>
+    <!-- Setup steps -->
+    <div style="background:var(--b3);border-radius:var(--rs);padding:11px 13px;margin-bottom:10px;font-size:12px;color:var(--tx2);line-height:2">
+      <div style="color:var(--gd2);font-weight:600;margin-bottom:6px">One-time setup (5 minutes):</div>
+      <div>① Go to <strong style="color:var(--gd)">sheets.google.com</strong> → create a new sheet called <em>Riwayat</em></div>
+      <div>② In the sheet, click <strong>Extensions → Apps Script</strong></div>
+      <div>③ Paste the script below → click <strong>Deploy → New deployment → Web app</strong></div>
+      <div>④ Set <em>"Who has access"</em> to <strong>Anyone</strong> → copy the Web App URL</div>
+      <div>⑤ Paste the URL in the field below → Save</div>
     </div>
-    <div style="background:var(--b3);border:1px solid var(--br2);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--tx3);line-height:1.7">
-      <div style="color:var(--am);font-weight:600;margin-bottom:4px">⚡ One-click OneDrive upload (coming soon)</div>
-      Automatic background push to OneDrive requires a one-time Microsoft login setup. This will be enabled in the next update. For now, use the manual export above — it takes under 30 seconds.
-    </div>
-    <button class="btn bp" onclick="openExport('all')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export All → Upload to OneDrive
+    <!-- Apps Script to copy -->
+    <div style="background:#0a1200;border:1px solid #2a4a10;border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;font-family:monospace;font-size:10px;color:#a8d888;line-height:1.7;white-space:pre-wrap;word-break:break-all">function doPost(e){
+  const data = JSON.parse(e.postData.contents);
+  const sheet = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getActiveSheet();
+  if(sheet.getLastRow()===0){
+    sheet.appendRow([
+      'Entry Date','Event Date','Event Name',
+      'Category','Supplier','Item','Txn Type',
+      'Invoice No','Invoice Amt','Paid Amt',
+      'Pay Mode','Paid By','Remark','Entered By'
+    ]);
+  }
+  sheet.appendRow([
+    data.entry_date,data.event_date,data.event_name,
+    data.category_l1,data.supplier_name,data.item_desc,
+    data.txn_type,data.invoice_ref,data.invoice_amt,
+    data.paid_amt,data.pay_mode,data.paid_by,
+    data.remark,data.entered_by
+  ]);
+  return ContentService
+    .createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+    <button class="btn bs bsm" style="width:auto;margin-bottom:10px;font-size:11px" onclick="copyScript()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy script to clipboard
     </button>
+    <!-- URL input -->
+    <div class="fld" style="margin-bottom:8px">
+      <label>Google Apps Script Web App URL</label>
+      <input type="url" id="gsUrl" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px"/>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn bp bsm" style="flex:1" onclick="saveGsUrl()">Save & Enable sync</button>
+      <button class="btn bs bsm" style="flex:1" onclick="testGsSync()">Test connection</button>
+    </div>
+    <div id="gsSyncStatus" style="font-size:12px;color:var(--tx3);padding:4px 0"></div>
+    <!-- Push all historical -->
+    <div style="margin-top:8px;padding-top:10px;border-top:1px solid var(--br)">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:7px">Already have entries in Riwayat? Push all existing data to the sheet:</div>
+      <button class="btn bs bsm" onclick="pushAllToSheets()" style="font-size:12px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        Push all historical entries to Sheet
+      </button>
+    </div>
   </div>
   <div class="card" style="font-size:12px;color:var(--tx3);line-height:1.9">
     <div class="ct">Each export includes</div>
@@ -668,6 +715,8 @@ async function submitExp(){
     await sbP('expenses',entry);
     showSavedBanner(entry,'online');
     clearF();document.getElementById('nli').value='';
+    // push to Google Sheets if configured
+    pushToSheets(entry);
     // refresh known suppliers
     loadKnownSuppliers();
     loadMiniRecent();
@@ -873,7 +922,67 @@ function load(msg){document.getElementById('lmsg').textContent=msg||'Loading...'
 function hideLoad(){document.getElementById('loader').classList.remove('show');}
 let tt;function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='show'+(type?' '+type:'');clearTimeout(tt);tt=setTimeout(()=>{t.className='';},3500);}
 
+// ── GOOGLE SHEETS SYNC ──
+const GS_KEY='riwayat_gs_url';
+function saveGsUrl(){const url=document.getElementById('gsUrl').value.trim();if(!url||!url.includes('script.google.com')){toast('Paste a valid Apps Script URL','e');return;}localStorage.setItem(GS_KEY,url);document.getElementById('gsSyncStatus').innerHTML='<span style="color:var(--gn)">✓ Sync enabled — every new entry will be pushed to your Sheet</span>';toast('Google Sheets sync enabled ✓','s');}
+
+async function pushToSheets(entry){
+  const url=localStorage.getItem(GS_KEY);if(!url)return;
+  try{
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  }catch(e){/* silent — no-cors fetch always throws but still sends */}
+}
+
+async function testGsSync(){
+  const url=localStorage.getItem(GS_KEY)||document.getElementById('gsUrl').value.trim();
+  if(!url){toast('Save URL first','e');return;}
+  const status=document.getElementById('gsSyncStatus');
+  status.innerHTML='<span style="color:var(--am)">Testing...</span>';
+  const testEntry={entry_date:new Date().toISOString().split('T')[0],event_date:'',event_name:'TEST — please delete',category_l1:'Overheads',supplier_name:'TEST',item_desc:'Connection test from Riwayat',txn_type:'Direct Expense / No Invoice',invoice_ref:'',invoice_amt:'',paid_amt:0,pay_mode:'Cash',paid_by:CU||'Test',remark:'Delete this row',entered_by:CU||'Test'};
+  try{await fetch(url,{method:'POST',mode:'no-cors',body:JSON.stringify(testEntry)});status.innerHTML='<span style="color:var(--gn)">✓ Test sent! Check your Google Sheet — a TEST row should appear within 5 seconds. Delete it once confirmed.</span>';}
+  catch(e){status.innerHTML='<span style="color:var(--am)">Sent (no-cors mode — check your Sheet to confirm)</span>';}
+}
+
+async function pushAllToSheets(){
+  const url=localStorage.getItem(GS_KEY);
+  if(!url){toast('Set up Google Sheets URL first','e');goto('Export',document.getElementById('nEx'));return;}
+  if(!confirm('This will push ALL existing entries to Google Sheets. Rows will be added — make sure your sheet is empty first to avoid duplicates. Continue?'))return;
+  load('Pushing to Google Sheets...');
+  try{
+    const rows=await sbG('expenses?is_deleted=eq.false&select=*&order=created_at.asc');
+    let done=0;
+    for(const r of rows){
+      await pushToSheets({entry_date:r.entry_date||'',event_date:r.event_date||'',event_name:r.event_name||'',category_l1:r.category_l1||'',supplier_name:r.supplier_name||'',item_desc:r.item_desc||'',txn_type:r.txn_type||'',invoice_ref:r.invoice_ref||'',invoice_amt:r.invoice_amt||'',paid_amt:r.paid_amt||0,pay_mode:r.pay_mode||'',paid_by:r.paid_by||'',remark:r.remark||'',entered_by:r.entered_by||''});
+      done++;
+      // small delay to avoid rate limiting
+      if(done%10===0)await new Promise(r=>setTimeout(r,500));
+    }
+    toast(`${done} entries pushed to Google Sheets ✓`,'s');
+  }catch(e){toast('Error: '+e.message,'e');}finally{hideLoad();}
+}
+
+function copyScript(){
+  const script=`function doPost(e){
+  const data = JSON.parse(e.postData.contents);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if(sheet.getLastRow()===0){
+    sheet.appendRow(['Entry Date','Event Date','Event Name','Category','Supplier','Item','Txn Type','Invoice No','Invoice Amt','Paid Amt','Pay Mode','Paid By','Remark','Entered By']);
+  }
+  sheet.appendRow([data.entry_date,data.event_date,data.event_name,data.category_l1,data.supplier_name,data.item_desc,data.txn_type,data.invoice_ref,data.invoice_amt,data.paid_amt,data.pay_mode,data.paid_by,data.remark,data.entered_by]);
+  return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
+}`;
+  navigator.clipboard.writeText(script).then(()=>toast('Script copied ✓','s')).catch(()=>toast('Copy failed — select the code manually','e'));
+}
+
+// Load saved GS URL on init
+function loadGsSetup(){
+  const url=localStorage.getItem(GS_KEY);
+  const inp=document.getElementById('gsUrl');
+  if(inp&&url){inp.value=url;document.getElementById('gsSyncStatus').innerHTML='<span style="color:var(--gn)">✓ Sync active</span>';}
+}
+
 init();
+setTimeout(loadGsSetup,500);
 </script>
 </body>
 </html>
